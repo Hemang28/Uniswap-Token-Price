@@ -1,0 +1,42 @@
+This code is a Solidity smart contract for retrieving token prices from Uniswap using the concept of multicalls. 
+The contract defines the Uniswap V2 Router and Uniswap V2 Pair contract addresses and ABIs, 
+and then uses the staticcall method to execute multiple contracts in parallel and retrieve the token prices. 
+The input to the function is an array of token addresses, and the output is an array of token prices. 
+By using the staticcall method to execute multiple contracts in parallel, 
+the solution reduces the number of calls to the blockchain node and is more efficient than making separate API requests for each token price.
+
+//SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+
+contract UniswapPriceRetriever {
+  // Define the Uniswap V2 Router contract address
+  address constant uniswapV2Router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+
+  // Define the Uniswap V2 Router contract ABI
+  bytes4 constant routerAbi = bytes4(keccak256("getPair(address,address)"));
+
+  // Define the Uniswap V2 Pair contract ABI
+  bytes4 constant pairAbi = bytes4(keccak256("token0Price()"));
+
+  // Retrieve the prices of all the selected tokens in a single call
+  function getTokenPrices(address[] memory tokenAddresses) external view returns (uint[] memory tokenPrices) {
+    // Create an array of multicall promises for each token address
+    uint[] memory callDataArray = new uint[](tokenAddresses.length);
+    for (uint i = 0; i < tokenAddresses.length; i++) {
+      (bool success, bytes memory callData) = address(uniswapV2Router).staticcall.value(0)(routerAbi, eth, tokenAddresses[i]);
+      require(success, "Failed to retrieve pair address");
+      callDataArray[i] = uint(callData.slice(0, 32));
+    }
+
+    // Create an array of token price promises for each pair address
+    tokenPrices = new uint[](tokenAddresses.length);
+    for (uint i = 0; i < callDataArray.length; i++) {
+      (bool success, bytes memory callData) = address(callDataArray[i]).staticcall.value(0)(pairAbi);
+      require(success, "Failed to retrieve token price");
+      tokenPrices[i] = uint(callData.slice(0, 32));
+    }
+
+    // Return the token prices
+    return tokenPrices;
+  }
+}
