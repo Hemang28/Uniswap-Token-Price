@@ -1,0 +1,73 @@
+This topic is new for me although I tried doing with Uniswap V3. Code has few errors but you can check the logic and approach for it.
+
+
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.4.22 <0.9.0;
+
+
+contract MultiCallBasedUniswapV3PriceRetriever {
+    uint256 constant public DECIMALS = 18;
+    uint256 constant public MAX_TOKENS = 50;
+
+    struct TokenData {
+        uint256 price;
+        uint256 lastUpdated;
+    }
+
+    mapping(address => TokenData) public tokenData;
+    address public uniswapV3Router;
+
+    constructor(address _uniswapV3Router) public {
+        uniswapV3Router = _uniswapV3Router;
+    }
+
+    function updatePrices(address[] memory _tokens) public {
+        require(_tokens.length > 0 && _tokens.length <= MAX_TOKENS, "Invalid number of tokens");
+
+        // Code implementation for the multicall and retrieve the token prices
+    function multicall(bytes[] calldata data) public payable override returns (bytes[] memory results) {
+        results = new bytes[](data.length);
+        for (uint256 i = 0; i < data.length; i++) {
+            (bool success, bytes memory result) = address(this).delegatecall(data[i]);
+
+            if (!success) {
+                
+                if (result.length < 68) revert();
+                assembly {
+                    result := add(result, 0x04)
+                }
+                revert(abi.decode(result, (string)));
+            }
+
+            results[i] = result;
+        }
+    }
+}
+
+
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            tokenData[_tokens[i]] = TokenData(
+               
+                // Update the lastUpdated timestamp
+                block.timestamp
+            );
+        }
+    }
+
+    function getPrice(address _token) public view returns (uint256) {
+        return tokenData[_token].price;
+    }
+
+    function getPrices() public view returns (uint256[]) {
+        uint256[] memory prices = new uint256[](MAX_TOKENS);
+        uint256 count = 0;
+
+        for (address token in tokenData) {
+            prices[count] = tokenData[token].price;
+            count++;
+        }
+
+        return prices;
+    }
+}
