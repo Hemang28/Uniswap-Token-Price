@@ -1,0 +1,35 @@
+In this API is remaining to add and I have added the comments for that as well.
+
+pragma solidity ^0.8.0;
+
+contract UniswapPriceRetriever {
+  // Array to store the addresses of the tokens to retrieve prices for
+  address[] public tokens;
+
+  // Mapping to store the prices of each token
+  mapping (address => uint256) public tokenPrices;
+
+  // Events to notify clients of updates to token prices
+  event TokenPriceUpdate(address token, uint256 price);
+
+  // Function to add a new token to the array of tokens
+  function addToken(address token) public {
+    tokens.push(token);
+  }
+
+  // Function to retrieve the prices of all tokens in the array
+  function retrievePrices() public {
+    // Use the Uniswap API to retrieve the prices of all tokens in the array
+    for (uint256 i = 0; i < tokens.length; i++) {
+      uint256 price = uniswapPrice(tokens[i]);
+      tokenPrices[tokens[i]] = price;
+      emit TokenPriceUpdate(tokens[i], price);
+    }
+  }
+
+  // Function to retrieve the price of a single token
+  function uniswapPrice(address token) private view returns (uint256) {
+    // Call the Uniswap API to retrieve the price of the specified token
+    // ...
+  }
+}
